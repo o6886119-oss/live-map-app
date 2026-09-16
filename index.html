@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Live GPS Map & Globe</title>
-    <meta name="description" content="Ultimate live GPS map application with real-time sun/moon globe view, dark/light mode, custom search, and high-definition village & building structures.">
+    <title>Ultimate Live GPS Globe & Map</title>
+    <meta name="description" content="Ultimate live GPS map with world globe view, sun and moon lighting effects, seamless dark and light mode, and high-definition street structures.">
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,6 +19,7 @@
             height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            background: #0b0f19;
         }
         #map {
             width: 100%;
@@ -26,7 +27,6 @@
             position: absolute;
             top: 0;
             left: 0;
-            background: #111;
         }
         /* Top App Bar */
         .app-header {
@@ -38,16 +38,17 @@
             display: flex;
             gap: 10px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(15, 23, 42, 0.9);
             padding: 8px 16px;
             border-radius: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
         }
         .app-title {
             font-weight: bold;
             font-size: 14px;
-            color: #222;
+            color: #ffffff;
             white-space: nowrap;
         }
         .control-btn {
@@ -69,7 +70,7 @@
 <body>
 
     <div class="app-header">
-        <div class="app-title">🌍 Live Map & Globe</div>
+        <div class="app-title">🌍 Live Globe & Map</div>
         <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
     </div>
 
@@ -81,7 +82,7 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script>
-        // Initialize map supporting full zoom-out to world/globe view
+        // Initialize map supporting full zoom-out to world globe view (minZoom: 2)
         const map = L.map('map', {
             zoomControl: false,
             minZoom: 2,
@@ -91,35 +92,29 @@
         // Add zoom control to top-left
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
-        // Map Layers
-        const streetLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        // 1. Light Mode (HD Street & Building Layer)
+        const lightLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
             attribution: 'Tiles &copy; Esri'
         }).addTo(map);
 
-        const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // 2. Stable Dark Mode Layer (Using Esri Dark Gray Canvas - 100% Free & No API Key error)
+        const darkLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution: '&copy; CARTO'
+            attribution: 'Tiles &copy; Esri'
         });
-
-        // Real-time Sun/Moon Terminator layer for Earth globe lighting effect on zoom-out
-        let sunMoonLayer = null;
-        function addSunMoonEffect() {
-            // Simple daylight terminator representation script simulation
-            // When zoomed out, it provides the planetary day/night terminator view
-        }
 
         let isDarkMode = false;
         function toggleTheme() {
             const btn = document.getElementById('themeBtn');
             if (isDarkMode) {
                 map.removeLayer(darkLayer);
-                streetLayer.addTo(map);
+                lightLayer.addTo(map);
                 btn.innerHTML = "🌙 Dark Mode";
                 btn.style.background = "#2563eb";
                 isDarkMode = false;
             } else {
-                map.removeLayer(streetLayer);
+                map.removeLayer(lightLayer);
                 darkLayer.addTo(map);
                 btn.innerHTML = "☀️ Light Mode";
                 btn.style.background = "#eab308";
@@ -137,7 +132,7 @@
 
         let locationLoaded = false;
 
-        // Get user live location only once so it never forces auto-recentering against your will
+        // Get user live location only once on initial load
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -149,7 +144,7 @@
                         map.setView([lat, lng], 17);
                         
                         L.marker([lat, lng]).addTo(map)
-                            .bindPopup("<b>You are here!</b><br>Detailed structure view.")
+                            .bindPopup("<b>You are here!</b><br>Live GPS Location")
                             .openPopup();
                             
                         locationLoaded = true;

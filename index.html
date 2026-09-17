@@ -163,3 +163,169 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Live GPS Globe & Map</title>
+    <meta name="description" content="Ultimate live GPS map with world globe view, dark and light mode, search bar, and high-definition street structures.">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet Control Geocoder CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #0b0f19;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        /* Top App Bar */
+        .app-header {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .app-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+        .control-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="app-title">🌍 Live Globe & Map</div>
+        <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Control Geocoder JS -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <script>
+        // Initialize map supporting full zoom-out to world globe view (minZoom: 1)
+        const map = L.map('map', {
+            zoomControl: false,
+            minZoom: 1,
+            maxZoom: 19
+        }).setView([23.6850, 90.3563], 3);
+
+        // Add zoom control to top-left
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        // 1. World & Street HD Layer (Supports both world globe view at max zoom-out and clear streets at zoom-in)
+        const streetLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            minZoom: 1,
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+
+        // 2. Stable Dark Mode Canvas Layer
+        const darkLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            minZoom: 1,
+            attribution: 'Tiles &copy; Esri'
+        });
+
+        let isDarkMode = false;
+        function toggleTheme() {
+            const btn = document.getElementById('themeBtn');
+            if (isDarkMode) {
+                map.removeLayer(darkLayer);
+                streetLayer.addTo(map);
+                btn.innerHTML = "🌙 Dark Mode";
+                btn.style.background = "#2563eb";
+                isDarkMode = false;
+            } else {
+                map.removeLayer(streetLayer);
+                darkLayer.addTo(map);
+                btn.innerHTML = "☀️ Light Mode";
+                btn.style.background = "#eab308";
+                btn.style.color = "#000";
+                isDarkMode = true;
+            }
+        }
+
+        // Custom Search Bar (Geocoder) placed at top-right
+        L.Control.geocoder({
+            defaultMarkGeocode: true,
+            position: 'topright',
+            placeholder: 'Search any place...'
+        }).addTo(map);
+
+        let locationLoaded = false;
+
+        // Get user live location only once on initial load
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    if (!locationLoaded) {
+                        map.setView([lat, lng], 17);
+                        
+                        L.marker([lat, lng]).addTo(map)
+                            .bindPopup("<b>You are here!</b><br>Live GPS Location")
+                            .openPopup();
+                            
+                        locationLoaded = true;
+                    }
+                },
+                (error) => {
+                    console.error("GPS Error: ", error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
+        }
+    </script>
+</body>
+</html>
